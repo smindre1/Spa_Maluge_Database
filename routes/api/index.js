@@ -7,8 +7,8 @@ const inventoryRoutes = require('./inventoryRoutes');
 
 router.use('/calendar', calendarRoutes);
 router.use('/schedule', scheduleRoutes);
-router.use('/user', userRoutes);
-router.use('/reservation', reservationRoutes);
+router.use('/users', userRoutes);
+router.use('/reservations', reservationRoutes);
 router.use('/inventory', inventoryRoutes);
 
 
