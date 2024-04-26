@@ -1,0 +1,5 @@
+# Redirects all path routes to the root index.html file
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
