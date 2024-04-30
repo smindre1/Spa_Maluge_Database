@@ -176,8 +176,8 @@ const resolvers = {
       return reservation;
     },
     addCalendarYear: async (parent, { year, January, February, March, April, May, June, July, August, September, October, November, December }) => {
-      const schedule = await Calendar.create({ year, January, February, March, April, May, June, July, August, September, October, November, December });
-      return schedule;
+      const calendar = await Calendar.create({ year, January, February, March, April, May, June, July, August, September, October, November, December });
+      return calendar;
     },
     addScheduleYear: async (parent, { year, January, February, March, April, May, June, July, August, September, October, November, December }) => {
       const schedule = await Schedule.create({ year, January, February, March, April, May, June, July, August, September, October, November, December });
