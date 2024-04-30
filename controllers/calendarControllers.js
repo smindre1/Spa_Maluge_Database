@@ -1,13 +1,12 @@
 const { Calendar } = require("../models");
 
 module.exports = {
-  //get all thoughts
+  //get all caledar years
   async getCalendar(req, res) {
     await Calendar.find()
     .then((calendar) => res.json(calendar))
     .catch((err) => res.status(500).json(err));;
   },
-  //get a single thought by _id
   async addCalendarYear(req, res) {
     try {
       const { year, January, February, March, April, May, June, July, August, September, October, November, December } = req.body;
@@ -62,6 +61,7 @@ module.exports = {
       let calendar = await Calendar.find();
       if(!calendar) {
         console.log('Calendar Not Found!');
+        return res.status(404).json({ error: 'Calendar Not Found' });
       }
       let calendarMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 

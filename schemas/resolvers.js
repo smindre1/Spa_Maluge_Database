@@ -10,7 +10,7 @@ const resolvers = {
       if (context.user) {
         return User.findOne({ _id: context.user._id });
       }
-      throw AuthenticationError;
+      // throw AuthenticationError;
     },
     reservations: async () => {
       return Reservation.find().populate("services");
@@ -353,7 +353,7 @@ const resolvers = {
       let originalInventory = inventory[0][Items];
       let newInventory = [...originalInventory, Item];
 
-      const updatedInventory = await Calendar.findOneAndUpdate({ ItemCategory }, {Items: newInventory});
+      const updatedInventory = await Inventory.findOneAndUpdate({ ItemCategory }, {Items: newInventory});
       return updatedInventory;
     },
     removeFromInventory: async (parent, { ItemCategory, Item }) => {

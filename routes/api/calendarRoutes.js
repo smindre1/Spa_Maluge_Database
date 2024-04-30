@@ -1,7 +1,7 @@
 const router = require('express').Router();
-const {calendar, addCalendarYear, getCalendarMonth, calendarDayOpenStatus, calendarWeekdays} = require('../../controllers/calendarControllers');
+const {getCalendar, addCalendarYear, getCalendarMonth, calendarDayOpenStatus, calendarWeekdays} = require('../../controllers/calendarControllers');
 
-router.route('/').get(calendar).post(addCalendarYear);
+router.route('/').get(getCalendar).post(addCalendarYear);
 
 router.route('/:year/:month').get(getCalendarMonth);
 
