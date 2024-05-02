@@ -39,6 +39,7 @@ module.exports = {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   },
+  //calendarDayOpenStatus req objects: year: Int, month: String (eg. "Januaray"), day: Int, open: Boolean
   async calendarDayOpenStatus(req, res) {
     try {
     //Finds the calendar year
@@ -48,14 +49,14 @@ module.exports = {
       days.day == req.body.day ? days.open = req.body.open : days;
       return days;
     });
-    const updatedCalendar = await Calendar.findOneAndUpdate({ year: req.body.year }, {[req.body.month]: updatedMonth});
+    const updatedCalendar = await Calendar.findOneAndUpdate({ year: req.body.year }, {[req.body.month]: updatedMonth}, {new: true});
     res.status(202).json({ message: 'Calendar year updated successfully', data: updatedCalendar });
     } catch (error) {
       console.error('Error updating calendar day status:', error);
       res.status(500).json({ error: 'Internal Server Error' });
     }
   },
-
+  //calendarWeekdays req objects: Sun, Mon, Tue, Wed, Thu, Fri, Sat. (Bool)
   async calendarWeekdays(req, res) {
     try {
       let calendar = await Calendar.find();
@@ -114,6 +115,8 @@ module.exports = {
         await Calendar.findOneAndUpdate({ year }, newYear);
       }
       
+      const results = await Calendar.findOne({year: 1000});
+      res.status(201).json({ message: "The updated weekdays", data: results });
       // return updatedCalendar;
     } catch (error) {
       console.error('Error updating calendar weekday(s) open status:', error);

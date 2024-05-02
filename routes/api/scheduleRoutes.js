@@ -7,6 +7,7 @@ router.route('/').post(addScheduleYear);
 
 router.route('/update-schedule-day').put(updateScheduleDay);
 
+//Takes around 130 seconds to process this request
 router.route('/update-schedule-hours').put(updateScheduleHours);
 
 module.exports = router;

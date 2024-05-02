@@ -7,6 +7,8 @@ module.exports = {
     .then((reservations) => res.json(reservations))
     .catch((err) => res.status(500).json(err));
   },
+  // req body should include:
+  // { name: string, email: string, phone: string, day: string (eg. "January 1, 2024"), appointmentTime: [Int], services: [{type: string, client: string, price: Int (unit of dollars)}], specialRequests: string, payment: {cardOwner: "Bob", cardNumber: 1000, cardExpiration: 1000, securityCode: 123, billingAddress: "Confusion"} (prefilled because it currently does not take payment information), room: Int };
   async addReservation(req, res) {
     try {
       const {room} = req.body;
@@ -65,10 +67,10 @@ module.exports = {
   },
   async updateReservation(req, res) {
     try {
-      if (req.body.reservation) {
+      if (req.body) {
         const reservation = await Reservation.findOneAndUpdate(
           { _id: req.params.reservationId },
-          req.body.reservation );
+          {...req.body}, {new: true} );
 
           res.status(200).json(reservation);
       } else {
@@ -86,7 +88,7 @@ module.exports = {
       const reservation = await Reservation.findOneAndDelete({
         _id: req.params.reservationId,
       });
-      res.status(200).json(reservation);
+      res.status(200).json({ message: "The reservation has been cancelled/deleted" });
       
     } catch (error) {
       console.error('Error deleting reservation', error);

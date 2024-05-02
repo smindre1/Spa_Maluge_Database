@@ -1,7 +1,8 @@
 const { Schedule, Inventory } = require("../models");
 
 module.exports = {
-  //get all schedules
+  //Obtains the available timeslots for the specified day and itemCategory.
+  //Params: year, month, day, itemcategory
   async getSchedule(req, res) {
     try {
       const schedule = await Schedule.findOne({year: req.params.year});
@@ -14,7 +15,7 @@ module.exports = {
 
       if(!monthData) {
         console.log('Month Not Found!');
-        return res.status(404).json({ error: 'Scheudle Month Not Found' });
+        return res.status(404).json({ error: 'Schedule Month Not Found' });
       }
 
       const dayPlans = monthData.find((dayPlan) => dayPlan.day == req.params.day);
@@ -23,7 +24,7 @@ module.exports = {
         return res.status(404).json({ error: 'Schedule Day Not Found' });
       }
 
-      if(itemCategory) {
+      if(req.params.itemCategory) {
         const inventory = await Inventory.find({ItemCategory: req.params.itemCategory});
         const rooms = inventory[0].Rooms;
 
@@ -65,6 +66,7 @@ module.exports = {
         res.status(500).json({ error: 'Internal Server Error' });
       }
   },
+  //req body objects: year, month, day, openingTime: Int (0-95), closingTime: Int (0-95)
   async updateScheduleDay(req, res) {
     try {
       const schedule = await Schedule.findOne({year: req.body.year});
@@ -85,7 +87,7 @@ module.exports = {
       }
 
       dayPlans.timeSlots.map((timeSlot) => {
-        if(timeSlot.time < req.body.openingTime || timeSlot.time > closingTime) {
+        if(timeSlot.time < req.body.openingTime || timeSlot.time > req.body.closingTime) {
           let range = timeSlot.availability.length;
           for(let i=0; i<range; i++) {
             timeSlot.availability[i].available = false;
@@ -100,15 +102,37 @@ module.exports = {
       //[day-1] because that is the difference between the day and the day's place in the month array
       monthData[Number(req.body.day)-1].timeSlots = dayPlans.timeSlots;
 
-      const updatedSchedule = await Schedule.findOneAndUpdate({ year: req.body.year }, {[req.body.month]: monthData});
+      await Schedule.findOneAndUpdate({ year: req.body.year }, {[req.body.month]: monthData}, {new: true});
+
+      //Grabbing the updated schedule day:
+      const newSchedule = await Schedule.findOne({year: req.body.year});
+      if(!newSchedule) {
+        console.log('Schedule Not Found!');
+        return res.status(404).json({ error: 'Schedule Not Found' });
+      }
+
+      const newMonthData = newSchedule[req.body.month];
+
+      if(!newMonthData) {
+        console.log('Month Not Found!');
+        return res.status(404).json({ error: 'Schedule Month Not Found' });
+      }
+
+      const newScheduleDay = newMonthData.find((dayPlan) => dayPlan.day == req.body.day);
+
+      if(!newScheduleDay) {
+        console.log('Day Not Found!');
+        return res.status(404).json({ error: 'Schedule Day Not Found' });
+      }
 
       // Send the updatedSchedule as a JSON response to the client
-      res.status(200).json(updatedSchedule);
+      res.status(200).json({message: "The updated schedule day.", data: newScheduleDay});
     } catch (error) {
       console.error('Error updating schedule day:', error);
       res.status(500).json({ error: 'Internal Server Error' });
     }
   },
+  //
   async updateScheduleHours(req, res) {
     try {
       let schedule = await Schedule.find();
@@ -164,6 +188,23 @@ module.exports = {
         const newYear = await updateYear(months);
         await Schedule.findOneAndUpdate({ year }, newYear);
       }
+
+      //Grabbing the updated schedule day:
+      const newSchedule = await Schedule.findOne({year: 1000});
+      if(!newSchedule) {
+        console.log('Schedule Not Found!');
+        return res.status(404).json({ error: 'Schedule Not Found' });
+      }
+
+      const newScheduleDay = newSchedule.January[0];
+
+      if(!newScheduleDay) {
+        console.log('Day Not Found!');
+        return res.status(404).json({ error: 'Schedule Test Day Not Found' });
+      }
+
+      // Send the updatedSchedule as a JSON response to the client
+      res.status(200).json({message: "The general updated schedule hours", data: newScheduleDay});
       
       // return updatedSchedule;
     } catch (error) {

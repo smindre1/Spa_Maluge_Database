@@ -1,5 +1,6 @@
 const { User } = require("../models");
 const { signToken, AuthenticationError } = require("../utils/auth");
+const bcrypt = require('bcrypt');
 
 module.exports = {
   //get all users/staff
@@ -35,17 +36,37 @@ module.exports = {
         const correctPw = await user.isCorrectPassword(req.params.password);
   
         if (!correctPw) {
-            console("Incorrect Password");
             //   throw AuthenticationError;
             console.log('Incorrect Password!');
             return res.status(404).json({ error: 'Incorrect Password' });
         }
   
         const token = signToken(user);
-        // return { token, user };
 
-      // Send the monthData as a JSON response to the client
-      res.status(200).json({ token, data: user });
+        //Retrieves the user's data again but this time without the password field
+        req.params.phone ? await User.findOne({ phone: req.params.phone }).select('-password').exec().then(profile => {
+          if (profile) {
+            // Process the user object without the 'password' field
+            user = profile;
+          } else {
+            console.log('User not found');
+            // Handle case where user is not found
+            return res.status(404).json({ message: "User not found. Code 410", error: AuthenticationError });
+          }
+        })
+           : await User.findOne({ email: req.params.email }).select('-password').exec().then(profile => {
+            if (profile) {
+              // Process the user object without the 'password' field
+              user = profile;
+            } else {
+              console.log('User not found');
+              // Handle case where user is not found
+              return res.status(404).json({ message: "User not found. Code 411", error: AuthenticationError });
+            }
+          });
+
+        // Send the token and user data as a response
+        res.status(200).json({ token, data: user });
     } catch (error) {
       console.error('Error, failed to log in', error);
       res.status(500).json({ error: 'Internal Server Error' });
@@ -53,8 +74,10 @@ module.exports = {
   },
   async me(req, res) {
     try {
-        const user = User.findOne({ _id: req.params.userId });
-
+        const user = await User.findOne({ _id: req.params.userId });
+        if(!user) {
+          return res.status(404).json({ error: 'Could not find user' });
+        }
         res.status(200).json({ message: 'Found User Profile', data: user });
     } catch (error) {
       console.error("Error, could not find user's profile", error);
@@ -64,7 +87,11 @@ module.exports = {
 
   async updateUser(req, res) {
     try {
-        const user = await User.findOneAndUpdate({ _id: req.params.userId }, req.body );
+        if(req.body.password) {
+          const saltRounds = 10;
+          req.body.password = await bcrypt.hash(req.body.password, saltRounds);
+        }
+        const user = await User.findOneAndUpdate({ _id: req.params.userId }, req.body, {new: true} );
         res.status(200).json({ message: 'User updated', data: user });
     } catch (error) {
       console.error('Error updating user', error);
@@ -75,7 +102,7 @@ module.exports = {
   async deleteUser(req, res) {
     try {
         const user = await User.findOneAndDelete({ _id: req.params.userId });
-        res.status(200).json({ message: 'User deleted', data: user });
+        res.status(200).json({ message: `User ${user.name} deleted`});
     } catch (error) {
       console.error('Error deleting user', error);
       res.status(500).json({ error: 'Internal Server Error' });
