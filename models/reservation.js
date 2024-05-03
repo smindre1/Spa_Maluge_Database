@@ -33,12 +33,20 @@ const reservationSchema = new Schema({
             type: Number,
             required: true,
         },
+        itemCategory: {
+            type: Number,
+            required: true,
+        },
         addOns: [{
             addition: {
                 type: String,
                 required: false,
             },
             price: {
+                type: Number,
+                required: false,
+            },
+            itemCategory: {
                 type: Number,
                 required: false,
             }
