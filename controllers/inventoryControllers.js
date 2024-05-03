@@ -20,7 +20,7 @@ module.exports = {
   },
   async getItemList(req, res) {
     try {
-      const inventory = await Inventory.findOne({ItemCategory: req.params.ItemCategory});
+      const inventory = await Inventory.findOne({ItemCategory: req.params.itemCategory});
       if(!inventory) {
         console.log('Inventory Not Found!');
         return res.status(404).json({ error: 'Inventory Not Found' });
@@ -39,7 +39,7 @@ module.exports = {
         let originalInventory = inventory[0][Items];
         let newInventory = [...originalInventory, req.body.item];
   
-        const updatedInventory = await Inventory.findOneAndUpdate({ ItemCategory: req.params.ItemCategory }, {Items: newInventory});
+        const updatedInventory = await Inventory.findOneAndUpdate({ ItemCategory: req.params.itemCategory }, {Items: newInventory});
         
 
         res.status(202).json({ message: 'Inventory updated successfully', data: updatedInventory });
