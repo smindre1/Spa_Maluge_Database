@@ -25,7 +25,7 @@ module.exports = {
     try {
         var user;
         //It will check if a phone number is provided, if not it will search based on the email input.
-        req.params.phone ? user = await User.findOne({ phone: req.params.phone }) : user = await User.findOne({ email: req.params.email });
+        req.body.phone ? user = await User.findOne({ phone: req.body.phone }) : user = await User.findOne({ email: req.body.email });
   
         if (!user) {
             //throw AuthenticationError;
@@ -33,7 +33,7 @@ module.exports = {
             return res.status(404).json({ error: AuthenticationError });
         }
   
-        const correctPw = await user.isCorrectPassword(req.params.password);
+        const correctPw = await user.isCorrectPassword(req.body.password);
   
         if (!correctPw) {
             //   throw AuthenticationError;
@@ -44,7 +44,7 @@ module.exports = {
         const token = signToken(user);
 
         //Retrieves the user's data again but this time without the password field
-        req.params.phone ? await User.findOne({ phone: req.params.phone }).select('-password').exec().then(profile => {
+        req.body.phone ? await User.findOne({ phone: req.body.phone }).select('-password').exec().then(profile => {
           if (profile) {
             // Process the user object without the 'password' field
             user = profile;
@@ -54,7 +54,7 @@ module.exports = {
             return res.status(404).json({ message: "User not found. Code 410", error: AuthenticationError });
           }
         })
-           : await User.findOne({ email: req.params.email }).select('-password').exec().then(profile => {
+           : await User.findOne({ email: req.body.email }).select('-password').exec().then(profile => {
             if (profile) {
               // Process the user object without the 'password' field
               user = profile;

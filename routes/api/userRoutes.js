@@ -3,7 +3,7 @@ const {users, addUser, login, me, updateUser, deleteUser} = require('../../contr
 
 router.route('/').get(users).post(addUser);
 
-router.route('/login/:phone?/:email?/:password').get(login);
+router.route('/login').post(login);
 
 router.route('/:userId').get(me).put(updateUser).delete(deleteUser);
 
