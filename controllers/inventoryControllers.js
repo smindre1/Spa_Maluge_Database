@@ -1,11 +1,18 @@
 const { Inventory } = require("../models");
+const db = require('../config/connection');
 
 module.exports = {
   //get all inventories
   async getInventoryList(req, res) {
-    await Inventory.find()
-    .then((inventories) => res.json(inventories))
-    .catch((err) => res.status(500).json(err));;
+    try {
+      let inventories = await Inventory.find();
+      res.json(inventories)
+    } catch (error) {
+      res.status(500).json({message: 'Could not retrieve inventories'})
+    }
+    // finally {
+    //   db.connection.close() //Closing the connection to prevent memory leaks
+    // }
   },
   async createInventory(req, res) {
     try {

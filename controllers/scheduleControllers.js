@@ -1,58 +1,150 @@
+// const { default: mongoose } = require("mongoose");
 const { Schedule, Inventory } = require("../models");
+// const db = require('../config/connection');
+const mongoose = require("mongoose");
 
 module.exports = {
   //Obtains the available timeslots for the specified day and itemCategory.
   //Params: year, month, day, itemcategory
   async getSchedule(req, res) {
     try {
-      const schedule = await Schedule.findOne({year: req.params.year});
+      let index = Number(req.params.day) - 1;
+      let indexMonth = `$${req.params.month}`;
+      let indexTimeSlots = `$${req.params.month}.timeSlots`;
+
+      // let inventory = await Inventory.find({ItemCategory: req.params.itemCategory}).select('Rooms');
+      // let rooms = inventory[0].Rooms;
+      // console.log(rooms, "rooms");
+
+      // if(rooms.length == 1) {
+      //   console.log("one rooms");
+      //   let schedule = await Schedule.aggregate([ {$match: {year: Number(req.params.year)}}, 
+      //     {$project: {
+      //       day: { $arrayElemAt: [indexMonth, index]},
+      //       timeSlots: { $filter: { input: indexTimeSlots, as: 'timeSlot', cond: { $and: [{$eq: ['$timeSlot.availability.room', Number(rooms[0].Room)]}, {$eq: ['$timeSlot.availability.available', true]} ] }}}
+      //   }}]);
+
+      //   if(!schedule[0].day.timeSlots) {
+      //     console.log('Schedule Day Not Found!');
+      //     return res.status(404).json({ error: 'Schedule Day Not Found' });
+      //   }
+  
+      //   // let dayPlans = schedule[0].day.timeSlots;
+      //   res.status(200).json({ message: 'Schedule obtained successfully', data: schedule });
+      // } else if(rooms.length == 2) {
+        //   // console.log("two rooms");
+        //   let schedule = await Schedule.aggregate([ {$match: {year: Number(req.params.year)}}, 
+        //     {$project: {
+        //       day: { $arrayElemAt: [indexMonth, index]},
+        //       timeSlots: { $filter: { input: `$${req.params.month}.timeSlots`, as: 'timeSlot', cond: {
+        //         $or: [
+        //           { $eq: [ '$$timeSlot.availability.room', 5 ] },
+        //           { $eq: [ '$$timeSlot.availability.room', 6 ] }
+        //         ]
+        //       } }}
+        //   }}]);
+
+        // console.log(schedule[0].day.timeSlots, "rooms");
+      //   console.log('Filtered Schedule:', schedule);
+
+      //   if(!schedule) {
+      //     console.log('Schedule Day Not Found!');
+      //     return res.status(404).json({ error: 'Schedule Day Not Found' });
+      //   }
+  
+      //   // let dayPlans = schedule[0].day.timeSlots;
+      //   res.status(200).json({ message: 'Schedule obtained successfully', data: schedule });
+      // }
+
+        // console.log("two rooms");
+
+        ////////////////
+
+      let schedule = await Schedule.aggregate([
+        { $match: { year: Number(req.params.year) } },
+        {
+          $project: {
+            dayPlans: { $arrayElemAt: [indexMonth, index] }
+          }
+        },
+        {
+          $addFields: {
+            dayPlans: {
+              $mergeObjects: [
+                "$dayPlans",
+                {
+                  timeSlots: {
+                    $filter: {
+                      input: "$dayPlans.timeSlots",
+                      as: "timeSlot",
+                      cond: {
+                        $anyElementTrue: {
+                          $map: {
+                            input: "$$timeSlot.availability",
+                            as: "roomAvailability",
+                            in: "$$roomAvailability.available"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          $project: { _id: 0, dayPlans: 1 }
+        }
+      ]);
+
+//////////////////////
+
+      // console.log('Filtered Schedule:', schedule);
+
       if(!schedule) {
-        console.log('Schedule Not Found!');
-        return res.status(404).json({ error: 'Schedule Not Found' });
-      }
-
-      const monthData = schedule[req.params.month];
-
-      if(!monthData) {
-        console.log('Month Not Found!');
-        return res.status(404).json({ error: 'Schedule Month Not Found' });
-      }
-
-      const dayPlans = monthData.find((dayPlan) => dayPlan.day == req.params.day);
-      if(!dayPlans) {
-        console.log('Day Not Found!');
+        console.log('Schedule Day Not Found!');
         return res.status(404).json({ error: 'Schedule Day Not Found' });
       }
 
-      if(req.params.itemCategory) {
-        const inventory = await Inventory.find({ItemCategory: req.params.itemCategory});
-        const rooms = inventory[0].Rooms;
+      // let dayPlans = schedule[0].day.timeSlots;
+      res.status(200).json({ message: 'Schedule obtained successfully', data: schedule });
 
-        const findRooms = () => {
-          let selectedSchedule = [...dayPlans.timeSlots];
-          let availableRoomTimes = [];
-          for(let i=0; i < rooms.length; i++) {
-            let timeSlotList = selectedSchedule.filter((timeSlot) => 
-              rooms[i].Room == timeSlot.availability[rooms[i].Room - 1].room && timeSlot.availability[rooms[i].Room - 1].available == true
-            );
 
-            availableRoomTimes.push({timeSlots: timeSlotList});
-          }
-          return availableRoomTimes;
-        }
+      // console.log(dayPlans, "dayplans");
 
-        const availableTimeSlots = await findRooms();
+      // if(req.params.itemCategory) {
+      //   let inventory = await Inventory.find({ItemCategory: req.params.itemCategory}).select('Rooms');
 
-        res.status(200).json({ message: 'Schedule obtained successfully', data: availableTimeSlots });
-      } else {
-        const availableTimeSlots = dayPlans.timeSlots.filter((timeSlot) => timeSlot.availability[0].available == true);
+      //   let rooms = inventory[0].Rooms;
 
-        res.status(200).json({ message: 'Schedule obtained successfully', data: {timeSlots: availableTimeSlots} });
-        // return [{timeSlots: dayPlans.timeSlots}];
-      }
+      //   const findRooms = () => {
+      //     let selectedSchedule = [...dayPlans];
+      //     let availableRoomTimes = [];
+      //     for(let i=0; i < rooms.length; i++) {
+      //       let timeSlotList = selectedSchedule.filter((timeSlot) => 
+      //         rooms[i].Room == timeSlot.availability[rooms[i].Room - 1].room && timeSlot.availability[rooms[i].Room - 1].available == true
+      //       );
+
+      //       availableRoomTimes.push({timeSlots: timeSlotList});
+      //     }
+      //     return availableRoomTimes;
+      //   }
+
+      //   const availableTimeSlots = findRooms();
+
+      //   res.status(200).json({ message: 'Schedule obtained successfully', data: availableTimeSlots });
+      // } else {
+      //   const availableTimeSlots = dayPlans.filter((timeSlot) => timeSlot.availability[0].available == true);
+
+      //   res.status(200).json({ message: 'Schedule obtained successfully', data: {timeSlots: availableTimeSlots} });
+      //   // return [{timeSlots: dayPlans}];
+      // }
     } catch (error) {
       console.error('Error getting schedule:', error);
       res.status(500).json({ error: 'Internal Server Error' });
+    } finally {
+      // mongoose.connection.close() //Closing the connection to prevent memory leaks
     }
   },
   async addScheduleYear(req, res) {

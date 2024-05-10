@@ -1,11 +1,18 @@
 const { Calendar } = require("../models");
+const db = require('../config/connection');
 
 module.exports = {
   //get all caledar years
   async getCalendar(req, res) {
-    await Calendar.find()
-    .then((calendar) => res.json(calendar))
-    .catch((err) => res.status(500).json(err));;
+    try {
+      let calendar = await Calendar.find();
+      res.json(calendar);
+    } catch (error) {
+      res.status(500).json({message: 'Calendar could not be found'})
+    }
+    // finally {
+    //   db.connection.close()
+    // }
   },
   async addCalendarYear(req, res) {
     try {
