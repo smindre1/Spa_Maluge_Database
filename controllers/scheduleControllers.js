@@ -108,7 +108,7 @@ module.exports = {
       }
 
       // let dayPlans = schedule[0].day.timeSlots;
-      res.status(200).json({ message: 'Schedule obtained successfully', data: schedule });
+      res.status(200).json({ message: 'Schedule obtained successfully', data: schedule[0].dayPlans });
 
 
       // console.log(dayPlans, "dayplans");
