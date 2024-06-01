@@ -65,6 +65,44 @@ module.exports = {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   },
+  async dailyReservations(req, res) {
+    //Creates an array of seven days to do a total reservation count
+    const year = Number(req.params.year);
+    const day = Number(req.params.day);
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthData = {January: {month: 0, days: 31}, February: {month: 1, days: 28}, March: {month: 2, days: 31}, April: {month: 3, days: 30}, May: {month: 4, days: 31}, June: {month: 5, days: 30}, July: {month: 6, days: 31}, August: {month: 7, days: 31}, September: {month: 8, days: 30}, October: {month: 9, days: 31}, November: {month: 10, days: 30}, December: {month: 11, days: 31}};
+    year % 4 > 0 ? null : monthData.February.days == 29;
+    let week = [];
+    for(let i=0; i < 7; i++) {
+      if(day + i <= monthData[req.params.month].days) {
+        week.push(`${req.params.month} ${day + i}, ${req.params.year}`)
+      } else {
+        let inputYear = monthData[req.params.month].month + 1 > 11 ? year + 1 : year;
+        let index = monthData[req.params.month].month + 1 > 11 ? 0 : monthData[req.params.month].month + 1;
+        let nextMonth = months[index];
+        let newDay = day + i - monthData[req.params.month].days;
+        week.push(`${nextMonth} ${newDay}, ${inputYear}`);
+      }
+    }
+    
+    try {
+      //checks the total number of reservations for the next seven days (includes the initial day)
+      const weekCount = await Reservation.countDocuments({day: { $in: week}});
+
+      const date = `${req.params.month} ${req.params.day}, ${req.params.year}`;
+      const reservation = await Reservation.find({day: date});
+
+      if(!reservation) {
+        console.log('Daily Reservations Not Found!');
+        return res.status(404).json({ error: 'Daily Reservation Not Found' });
+      }
+      // Send the reservation as a JSON response to the client
+      res.status(200).json({data: reservation, weekCount: weekCount});
+    } catch (error) {
+      console.error('Error getting specific daily reservations', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  },
   async updateReservation(req, res) {
     try {
       if (req.body) {

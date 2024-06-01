@@ -5,7 +5,7 @@ module.exports = {
   //get all inventories
   async getInventoryList(req, res) {
     try {
-      let inventories = await Inventory.find();
+      let inventories = await Inventory.find().lean();
       res.json(inventories)
     } catch (error) {
       res.status(500).json({message: 'Could not retrieve inventories'})

@@ -101,6 +101,9 @@ module.exports = {
 //////////////////////
 
       // console.log('Filtered Schedule:', schedule);
+      // if(schedule.length > 0) {
+      //   console.log("Clarification", schedule[0].constructor.name);
+      // }
 
       if(!schedule) {
         console.log('Schedule Day Not Found!');

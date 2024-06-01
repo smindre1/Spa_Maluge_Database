@@ -4,7 +4,7 @@ By: Shane Mindreau [GitHub Profile](https://github.com/smindre1)
 **Side Note:** To avoid others using my deployed RESTful API and potentially overloading it, I am only going to be documenting the route endpoints.
 
 ## Description:
-This here is a RESTful API working with a Mongoose Massage Salon Database, for the business [Spa Maluge](https://spamaluge.com/). I built this API simply so the website I made for the business, Spa Maluge, could manage it's clients and employees.
+This here is a RESTful API working with a (Massage Salon) Mongoose Database, for the business [Spa Maluge](https://spamaluge.com/). I built this API simply so the website I made for the business, Spa Maluge, could manage it's clients and employees.
 
 ## Routes:
 There are five groupings/collections for the API:
@@ -44,7 +44,7 @@ There are five groupings/collections for the API:
         - **POST**: Creates a new schedule year. I have used this route in my seed.js file (/seeder/seed.js), which you can use for reference.
     - `Enpoint:` /api/schedule/update-schedule-day/
         - **PUT**: Updates the available time-slots of a specific day based on the request body object: {year, month, day, openingTime: Int (0-95), closingTime: Int (0-95)}.
-    - `Enpoint:` /api/schedule/update-schedule-day/update-schedule-hours
+    - `Enpoint:` /api/schedule/update-schedule-hours/
         - **PUT**: Updates the general business hours with the request body object: {open: Int (0-95), close: Int (0-95)}.
 
 - `Reservation Routes`:
@@ -72,3 +72,18 @@ There are five groupings/collections for the API:
         - **GET**: Fetches a specific user's general information based on userId.
         - **PUT**: Updates a specific user's information.
         - **DELETE**: Deletes a specific user's account.
+
+## License
+
+**GNU General Public License V2.**
+
+<!-- 
+Things to update
+* utils/auth secret variable to .env variable to make it more secure and match it on client site.
+* Fix user route response so it does not send all data back.
+* Add stripe payment method server routes.
+
+README.md sections to add:
+*Features such as auth and a seeder file.
+*Installation such as seeding database from local machine and updating config and server.js cors' origin .env variable.
+-->
