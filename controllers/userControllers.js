@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 module.exports = {
   //get all users/staff
   async users(req, res) {
-    await User.find()
+    await User.find().select('-password').lean()
     .then((users) => res.json(users))
     .catch((err) => res.status(500).json(err));;
   },
@@ -74,7 +74,7 @@ module.exports = {
   },
   async me(req, res) {
     try {
-        const user = await User.findOne({ _id: req.params.userId });
+        const user = await User.findOne({ _id: req.params.userId }).select('-password').lean();
         if(!user) {
           return res.status(404).json({ error: 'Could not find user' });
         }
@@ -92,7 +92,7 @@ module.exports = {
           req.body.password = await bcrypt.hash(req.body.password, saltRounds);
         }
         const user = await User.findOneAndUpdate({ _id: req.params.userId }, req.body, {new: true} );
-        res.status(200).json({ message: 'User updated', data: user });
+        res.status(200).json({ message: 'User updated' });
     } catch (error) {
       console.error('Error updating user', error);
       res.status(500).json({ error: 'Internal Server Error' });
