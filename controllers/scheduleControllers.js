@@ -18,7 +18,7 @@ module.exports = {
 
       // if(rooms.length == 1) {
       //   console.log("one rooms");
-      //   let schedule = await Schedule.aggregate([ {$match: {year: Number(req.params.year)}}, 
+      //   let schedule = await Schedule.aggregate([ {$match: {year: Number(req.params.year)}},
       //     {$project: {
       //       day: { $arrayElemAt: [indexMonth, index]},
       //       timeSlots: { $filter: { input: indexTimeSlots, as: 'timeSlot', cond: { $and: [{$eq: ['$timeSlot.availability.room', Number(rooms[0].Room)]}, {$eq: ['$timeSlot.availability.available', true]} ] }}}
@@ -28,44 +28,44 @@ module.exports = {
       //     console.log('Schedule Day Not Found!');
       //     return res.status(404).json({ error: 'Schedule Day Not Found' });
       //   }
-  
+
       //   // let dayPlans = schedule[0].day.timeSlots;
       //   res.status(200).json({ message: 'Schedule obtained successfully', data: schedule });
       // } else if(rooms.length == 2) {
-        //   // console.log("two rooms");
-        //   let schedule = await Schedule.aggregate([ {$match: {year: Number(req.params.year)}}, 
-        //     {$project: {
-        //       day: { $arrayElemAt: [indexMonth, index]},
-        //       timeSlots: { $filter: { input: `$${req.params.month}.timeSlots`, as: 'timeSlot', cond: {
-        //         $or: [
-        //           { $eq: [ '$$timeSlot.availability.room', 5 ] },
-        //           { $eq: [ '$$timeSlot.availability.room', 6 ] }
-        //         ]
-        //       } }}
-        //   }}]);
+      //   // console.log("two rooms");
+      //   let schedule = await Schedule.aggregate([ {$match: {year: Number(req.params.year)}},
+      //     {$project: {
+      //       day: { $arrayElemAt: [indexMonth, index]},
+      //       timeSlots: { $filter: { input: `$${req.params.month}.timeSlots`, as: 'timeSlot', cond: {
+      //         $or: [
+      //           { $eq: [ '$$timeSlot.availability.room', 5 ] },
+      //           { $eq: [ '$$timeSlot.availability.room', 6 ] }
+      //         ]
+      //       } }}
+      //   }}]);
 
-        // console.log(schedule[0].day.timeSlots, "rooms");
+      // console.log(schedule[0].day.timeSlots, "rooms");
       //   console.log('Filtered Schedule:', schedule);
 
       //   if(!schedule) {
       //     console.log('Schedule Day Not Found!');
       //     return res.status(404).json({ error: 'Schedule Day Not Found' });
       //   }
-  
+
       //   // let dayPlans = schedule[0].day.timeSlots;
       //   res.status(200).json({ message: 'Schedule obtained successfully', data: schedule });
       // }
 
-        // console.log("two rooms");
+      // console.log("two rooms");
 
-        ////////////////
+      ////////////////
 
       let schedule = await Schedule.aggregate([
         { $match: { year: Number(req.params.year) } },
         {
           $project: {
-            dayPlans: { $arrayElemAt: [indexMonth, index] }
-          }
+            dayPlans: { $arrayElemAt: [indexMonth, index] },
+          },
         },
         {
           $addFields: {
@@ -82,37 +82,36 @@ module.exports = {
                           $map: {
                             input: "$$timeSlot.availability",
                             as: "roomAvailability",
-                            in: "$$roomAvailability.available"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              ]
-            }
-          }
+                            in: "$$roomAvailability.available",
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
         },
         {
-          $project: { _id: 0, dayPlans: 1 }
-        }
+          $project: { _id: 0, dayPlans: 1 },
+        },
       ]);
 
-//////////////////////
+      //////////////////////
 
       // console.log('Filtered Schedule:', schedule);
       // if(schedule.length > 0) {
       //   console.log("Clarification", schedule[0].constructor.name);
       // }
 
-      if(!schedule) {
-        console.log('Schedule Day Not Found!');
-        return res.status(404).json({ error: 'Schedule Day Not Found' });
+      if (!schedule) {
+        console.log("Schedule Day Not Found!");
+        return res.status(404).json({ error: "Schedule Day Not Found" });
       }
 
       // let dayPlans = schedule[0].day.timeSlots;
-      res.status(200).json({ message: 'Schedule obtained successfully', data: schedule[0].dayPlans });
-
+      res.status(200).json({ message: "Schedule obtained successfully", data: schedule[0].dayPlans });
 
       // console.log(dayPlans, "dayplans");
 
@@ -125,7 +124,7 @@ module.exports = {
       //     let selectedSchedule = [...dayPlans];
       //     let availableRoomTimes = [];
       //     for(let i=0; i < rooms.length; i++) {
-      //       let timeSlotList = selectedSchedule.filter((timeSlot) => 
+      //       let timeSlotList = selectedSchedule.filter((timeSlot) =>
       //         rooms[i].Room == timeSlot.availability[rooms[i].Room - 1].room && timeSlot.availability[rooms[i].Room - 1].available == true
       //       );
 
@@ -144,8 +143,8 @@ module.exports = {
       //   // return [{timeSlots: dayPlans}];
       // }
     } catch (error) {
-      console.error('Error getting schedule:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error getting schedule:", error);
+      res.status(500).json({ error: "Internal Server Error" });
     } finally {
       // mongoose.connection.close() //Closing the connection to prevent memory leaks
     }
@@ -155,156 +154,156 @@ module.exports = {
       const { year, January, February, March, April, May, June, July, August, September, October, November, December } = req.body;
       const newScheduleYear = await Schedule.create({ year, January, February, March, April, May, June, July, August, September, October, November, December });
       //Checking Response
-      res.status(201).json({ message: 'Schedule year added successfully', data: newScheduleYear });
+      res.status(201).json({ message: "Schedule year added successfully", data: newScheduleYear });
     } catch (error) {
-        console.error('Error adding schedule year:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-      }
+      console.error("Error adding schedule year:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
   },
   //req body objects: year, month, day, openingTime: Int (0-95), closingTime: Int (0-95)
   async updateScheduleDay(req, res) {
     try {
-      const schedule = await Schedule.findOne({year: req.body.year});
-      if(!schedule) {
-        console.log('Schedule Not Found!');
-        return res.status(404).json({ error: 'Schedule Not Found' });
+      const schedule = await Schedule.findOne({ year: req.body.year });
+      if (!schedule) {
+        console.log("Schedule Not Found!");
+        return res.status(404).json({ error: "Schedule Not Found" });
       }
       let monthData = schedule[req.body.month];
 
-      if(!monthData) {
-        console.log('Schedule Month Not Found!');
-        return res.status(404).json({ error: 'Schedule Month Not Found' });
+      if (!monthData) {
+        console.log("Schedule Month Not Found!");
+        return res.status(404).json({ error: "Schedule Month Not Found" });
       }
       let dayPlans = monthData.find((dayPlan) => dayPlan.day == Number(req.body.day));
-      if(!dayPlans) {
-        console.log('Day Not Found!');
-        return res.status(404).json({ error: 'Schedule Day Not Found' });
+      if (!dayPlans) {
+        console.log("Day Not Found!");
+        return res.status(404).json({ error: "Schedule Day Not Found" });
       }
 
       dayPlans.timeSlots.map((timeSlot) => {
-        if(timeSlot.time < req.body.openingTime || timeSlot.time > req.body.closingTime) {
+        if (timeSlot.time < req.body.openingTime || timeSlot.time > req.body.closingTime) {
           let range = timeSlot.availability.length;
-          for(let i=0; i<range; i++) {
+          for (let i = 0; i < range; i++) {
             timeSlot.availability[i].available = false;
           }
         } else {
           let range = timeSlot.availability.length;
-          for(let i=0; i<range; i++) {
+          for (let i = 0; i < range; i++) {
             timeSlot.availability[i].available = true;
           }
         }
       });
       //[day-1] because that is the difference between the day and the day's place in the month array
-      monthData[Number(req.body.day)-1].timeSlots = dayPlans.timeSlots;
+      monthData[Number(req.body.day) - 1].timeSlots = dayPlans.timeSlots;
 
-      await Schedule.findOneAndUpdate({ year: req.body.year }, {[req.body.month]: monthData}, {new: true});
+      await Schedule.findOneAndUpdate({ year: req.body.year }, { [req.body.month]: monthData }, { new: true });
 
       //Grabbing the updated schedule day:
-      const newSchedule = await Schedule.findOne({year: req.body.year});
-      if(!newSchedule) {
-        console.log('Schedule Not Found!');
-        return res.status(404).json({ error: 'Schedule Not Found' });
+      const newSchedule = await Schedule.findOne({ year: req.body.year });
+      if (!newSchedule) {
+        console.log("Schedule Not Found!");
+        return res.status(404).json({ error: "Schedule Not Found" });
       }
 
       const newMonthData = newSchedule[req.body.month];
 
-      if(!newMonthData) {
-        console.log('Month Not Found!');
-        return res.status(404).json({ error: 'Schedule Month Not Found' });
+      if (!newMonthData) {
+        console.log("Month Not Found!");
+        return res.status(404).json({ error: "Schedule Month Not Found" });
       }
 
       const newScheduleDay = newMonthData.find((dayPlan) => dayPlan.day == req.body.day);
 
-      if(!newScheduleDay) {
-        console.log('Day Not Found!');
-        return res.status(404).json({ error: 'Schedule Day Not Found' });
+      if (!newScheduleDay) {
+        console.log("Day Not Found!");
+        return res.status(404).json({ error: "Schedule Day Not Found" });
       }
 
       // Send the updatedSchedule as a JSON response to the client
-      res.status(200).json({message: "The updated schedule day.", data: newScheduleDay});
+      res.status(200).json({ message: "The updated schedule day.", data: newScheduleDay });
     } catch (error) {
-      console.error('Error updating schedule day:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error updating schedule day:", error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
   },
   //
   async updateScheduleHours(req, res) {
     try {
       let schedule = await Schedule.find();
-      if(!schedule) {
-        console.log('Schedule Not Found!');
-        return res.status(404).json({ error: 'Schedule Not Found' });
+      if (!schedule) {
+        console.log("Schedule Not Found!");
+        return res.status(404).json({ error: "Schedule Not Found" });
       }
-      let scheduleMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      let scheduleMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
       //Updates a month with the user's input
       const updateMonth = async (month) => {
         const newMonth = [];
-        for(let i=0; i < month.length; i++) {
-          let reformedDay = {day: month[i].day, timeSlots: month[i].timeSlots};
+        for (let i = 0; i < month.length; i++) {
+          let reformedDay = { day: month[i].day, timeSlots: month[i].timeSlots };
           newMonth.push(reformedDay);
         }
         //Looping through each day of the month, in which it cycles/updates each timeSlot for each day
         newMonth.map((day) => {
           day.timeSlots.map((timeSlot) => {
-            if(timeSlot.time < req.body.open || timeSlot.time > req.body.close) {
+            if (timeSlot.time < req.body.open || timeSlot.time > req.body.close) {
               let range = timeSlot.availability.length;
-              for(let i=0; i<range; i++) {
+              for (let i = 0; i < range; i++) {
                 timeSlot.availability[i].available = false;
               }
             } else {
               let range = timeSlot.availability.length;
-              for(let i=0; i<range; i++) {
+              for (let i = 0; i < range; i++) {
                 timeSlot.availability[i].available = true;
               }
             }
           });
-        })
+        });
         return newMonth;
-      }
+      };
 
       //Creates an object for a specific year with the months that have been updated with the user's input
       const updateYear = async (months) => {
         let updatedMonths = {};
         //Looping through each month of the year
-        for(let i=0; i < months.length; i++) {
+        for (let i = 0; i < months.length; i++) {
           let month = months[i];
           const newMonth = await updateMonth(month);
           updatedMonths[scheduleMonths[i]] = newMonth;
         }
         return updatedMonths;
-      }
+      };
 
       //Loops through each schedule year, updates the year, then updates the database with it
-      for(let i=0; i < schedule.length; i++) {
+      for (let i = 0; i < schedule.length; i++) {
         let year = schedule[i].year;
-        let {January, February, March, April, May, June, July, August, September, October, November, December} = schedule[i];
+        let { January, February, March, April, May, June, July, August, September, October, November, December } = schedule[i];
         let months = [January, February, March, April, May, June, July, August, September, October, November, December];
         const newYear = await updateYear(months);
         await Schedule.findOneAndUpdate({ year }, newYear);
       }
 
       //Grabbing the updated schedule day:
-      const newSchedule = await Schedule.findOne({year: 1000});
-      if(!newSchedule) {
-        console.log('Schedule Not Found!');
-        return res.status(404).json({ error: 'Schedule Not Found' });
+      const newSchedule = await Schedule.findOne({ year: 1000 });
+      if (!newSchedule) {
+        console.log("Schedule Not Found!");
+        return res.status(404).json({ error: "Schedule Not Found" });
       }
 
       const newScheduleDay = newSchedule.January[0];
 
-      if(!newScheduleDay) {
-        console.log('Day Not Found!');
-        return res.status(404).json({ error: 'Schedule Test Day Not Found' });
+      if (!newScheduleDay) {
+        console.log("Day Not Found!");
+        return res.status(404).json({ error: "Schedule Test Day Not Found" });
       }
 
       // Send the updatedSchedule as a JSON response to the client
-      res.status(200).json({message: "The general updated schedule hours", data: newScheduleDay});
-      
+      res.status(200).json({ message: "The general updated schedule hours", data: newScheduleDay });
+
       // return updatedSchedule;
     } catch (error) {
-      console.error('Error updating schedule hours:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      console.error("Error updating schedule hours:", error);
+      res.status(500).json({ error: "Internal Server Error" });
     }
   },
 };
