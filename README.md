@@ -86,4 +86,8 @@ Things to update
 README.md sections to add:
 *Features such as auth and a seeder file.
 *Installation such as seeding database from local machine and updating config and server.js cors' origin .env variable.
+
+Commit update message checklist:
+*Updated package json file: package nodemon was updated and package nodemailer was added.
+
 -->

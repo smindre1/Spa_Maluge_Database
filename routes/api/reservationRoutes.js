@@ -5,7 +5,6 @@ router.route('/').get(reservations).post(addReservation);
 
 router.route('/:year/:month/:day').get(dailyReservations);
 
-
 router.route('/:reservationId').get(getReservation).put(updateReservation).delete(cancelReservation);
 
 

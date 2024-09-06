@@ -10,16 +10,25 @@ module.exports = {
     .catch((err) => res.status(500).json(err));;
   },
   async addUser(req, res) {
-    try {
-        const { fullName, email, phone, password, position } = req.body;
-        const user = await User.create({ fullName, email, phone, password, position });
-        const token = signToken(user);
-      //Checking Response
-        res.status(201).json({ message: 'User and Auth Token added successfully', token, data: user });
-    } catch (error) {
-        console.error('Error adding user and making authentication token', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-      }
+    //Checks for pre-existing user with same credentials
+    const duplicateResults = await User.exists({ 
+      $or: [{email: req.body.email}, {phone: req.body.phone}] 
+    });
+
+    if(!duplicateResults) {
+      try {
+          const { fullName, email, phone, password, position } = req.body;
+          const user = await User.create({ fullName, email, phone, password, position });
+          const token = signToken(user);
+        //Checking Response
+          res.status(201).json({ message: 'User and Auth Token added successfully', token, data: user });
+      } catch (error) {
+          console.error('Error adding user and making authentication token', error);
+          res.status(500).json({ error: 'Internal Server Error' });
+        }
+    } else {
+      res.status(406).json({error: 'This email or phone number is already in use.'})
+    }
   },
   async login(req, res) {
     try {

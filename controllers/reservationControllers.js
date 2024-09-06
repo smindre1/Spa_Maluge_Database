@@ -1,4 +1,8 @@
 const { Reservation, Schedule } = require("../models");
+const nodemailer = require("nodemailer");
+const { google } = require('googleapis');
+const OAuth2 = google.auth.OAuth2;
+require('dotenv').config();
 
 module.exports = {
   //get all reservations
@@ -100,6 +104,70 @@ module.exports = {
       }
     };
 
+    const createTransporter = async () => {
+      try {
+          // const oauth2Client = new OAuth2( process.env.CLIENT_ID, process.env.CLIENT_SECRET, "https://developers.google.com/oauthplayground");
+          
+          // oauth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+          // console.log("Auth test: ", oauth2Client);
+          // const accessToken = await oauth2Client.getAccessToken();
+          // console.log('test 3:', accessToken.token);
+          // if (accessToken.token) {
+              const transporter = nodemailer.createTransport({
+                  service: 'gmail',
+                  auth: {
+                      // type: 'OAuth2',
+                      user: process.env.EMAIL_ACC,
+                      // clientId: process.env.CLIENT_ID,
+                      // clientSecret: process.env.CLIENT_SECRET,
+                      // refreshToken: process.env.REFRESH_TOKEN,
+                      // accessToken: accessToken.token,
+                      pass: process.env.EMAIL_PASS
+                  },
+              });
+              // console.log("Transporter: ", transporter)
+              return transporter;
+          // } else {
+          //     throw new Error('Failed to retrieve access token');
+          // }
+      } catch (error) {
+          console.error('Error creating transporter:', error.message);
+          throw error; // rethrow the error to handle it in your calling function
+      }
+  };
+
+    const sendEmail = async (emailAddress) => {
+      //To, subject, text, email
+      // const  = String(req.body.email);
+      try {
+        // Setting up a transporter
+        let transporter = await createTransporter();
+        // Email format
+        let mailOptions = {
+          from: process.env.EMAIL_ACC,
+          to: String(emailAddress),
+          subject: 'Your Reservation To Spa Maluge!',
+          text: 'Testing email software',
+          html: `<h1>Welcome!</h1>`,
+        };
+        // Sending the email
+        console.log("initial check");
+        // console.log("transport: ", transporter);
+        const info = await transporter.sendMail(mailOptions);
+        // Returns true if email was sent
+        console.log("check 1");
+        console.log("info: ", info);
+        console.log("check 2");
+
+        return info;
+
+      } catch (error) {
+        // res.status(500).json({message: 'Error sending email', error: error })
+        console.error('Error sending email:', error.message);
+        throw error;
+      }
+    };
+
     const reserveAppointmentTimes = async () => {
       let scheduleStatus = await checkTimeSlots();
       if (scheduleStatus) {
@@ -123,14 +191,24 @@ module.exports = {
         res.status(406).json({ success: scheduleStatus, message: "One or more of the requested timeslots have been reserved by someone else already." });
       }
     };
-
+//portfoliopage3001@gmail.com
+//portfoliopage3001@gmail.com
     try {
       let scheduleStatus = await reserveAppointmentTimes();
       // console.log("All timeslots updated: ", scheduleStatus);
       if (scheduleStatus) {
         const reservations = await Reservation.create(req.body);
-        //Checking Response
-        res.status(201).json({ message: "Reservation added successfully", data: reservations });
+        if (reservations) {
+          try {
+            const emailReceipt = await sendEmail(req.body.email);
+            console.log("Email Receipt: ", emailReceipt);
+            //Checking Response
+            res.status(201).json({ message: "Reservation added successfully", data: reservations });
+          } catch (error) {
+            res.status(500).json({ message: 'Error sending email', error: error.message });
+          }
+        }
+
       }
     } catch (error) {
       res.status(502).json({ success: false, message: "Reservation failed to be created", error });

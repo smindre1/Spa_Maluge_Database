@@ -17,5 +17,6 @@ module.exports = [{ItemCategory: 1, Rooms: [{Room: 1}, {Room: 2}], Items: [
 ]}, {ItemCategory: 4, Items: [
     {Item: "Hot Stones", Prices: [{time: 0, cost: 20}]},
     {Item: "CBD Custom Massage", Prices: [{time: 0, cost: 20}]},
+    {Item: "Cupping Massage", Prices: [{time: 0, cost: 20}]},
 ]}]
 
