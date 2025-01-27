@@ -12,32 +12,21 @@ module.exports = {
       .then((reservations) => res.json(reservations))
       .catch((err) => res.status(500).json(err));
   },
-  // req body should include:
-  // { name: string, email: string, phone: string, day: string (eg. "January 1, 2024"), appointmentTime: [Int], services: [{type: string, client: string, price: Int (unit of dollars)}], specialRequests: string, payment: {cardOwner: "Bob", cardNumber: 1000, cardExpiration: 1000, securityCode: 123, billingAddress: "Confusion"} (prefilled because it currently does not take payment information), room: Int };
   async addReservation(req, res) {
-    // Extracts the room key from the req object
-    let { room } = req.body;
-    room = Number(room);
-    delete req.body.room;
-
-    const { day, appointmentTime } = req.body;
-    const date = day.split(", ");
-    const newDate = date[0].split(" ");
-
-    const year = Number(date[1]);
-    const month = newDate[0];
-    const dayOfMonth = Number(newDate[1]);
-    const updatedAvailability = { available: false };
+    // req body should include:
+    // { name: string, email: string, phone: string, day: string (eg. "January 1, 2024"), appointmentTime: [Int], services: [{type: string, client: string, price: Int (unit of dollars)}], specialRequests: string, payment: {cardOwner: "Bob", cardNumber: 1000, cardExpiration: 1000, securityCode: 123, billingAddress: "Confusion"} (prefilled because it currently does not take payment information), room: Int };
+    // console.log("req: ", req.body);
+    let reStatus = [];
+    let reEmail = {};
 
     // Runs a check on if the reserved schedule is available or not
-    const checkTimeSlots = async () => {
+    const checkTimeSlots = async (appointmentTime, year, month, dayOfMonth, room) => {
       const resultRecords = await Promise.all(
         appointmentTime.map(async (time) => {
-          let status = await checkAvailability(time);
+          let status = await checkAvailability(time, year, month, dayOfMonth, room);
           return status;
         })
       );
-      // console.log("Schedule Timeslots Available: ", resultRecords);
       if (resultRecords.includes(false)) {
         // If a timeslot in unavailable, return false
         return false;
@@ -47,7 +36,7 @@ module.exports = {
     };
 
     // Checks a specific timeslot's availability
-    const checkAvailability = async (time) => {
+    const checkAvailability = async (time, year, month, dayOfMonth, room) => {
       try {
         const result = await Schedule.aggregate([
           { $match: { year, [`${month}.day`]: dayOfMonth } },
@@ -72,7 +61,7 @@ module.exports = {
     };
 
     // Reserves the given timeslot by changing the element 'available' to false
-    const reserveTimeslot = async (timeSlot) => {
+    const reserveTimeslot = async (timeSlot, year, month, dayOfMonth, updatedAvailability, room) => {
       try {
         const result = await Schedule.updateOne(
           { year, [`${month}.day`]: dayOfMonth, [`${month}.timeSlots.time`]: timeSlot },
@@ -134,7 +123,7 @@ module.exports = {
           console.error('Error creating transporter:', error.message);
           throw error; // rethrow the error to handle it in your calling function
       }
-  };
+    };
 
     const sendEmail = async (emailAddress) => {
       //To, subject, text, email
@@ -151,13 +140,13 @@ module.exports = {
           html: `<h1>Welcome!</h1>`,
         };
         // Sending the email
-        console.log("initial check");
+        // console.log("initial check");
         // console.log("transport: ", transporter);
         const info = await transporter.sendMail(mailOptions);
         // Returns true if email was sent
-        console.log("check 1");
-        console.log("info: ", info);
-        console.log("check 2");
+        // console.log("check 1");
+        // console.log("info: ", info);
+        // console.log("check 2");
 
         return info;
 
@@ -168,51 +157,98 @@ module.exports = {
       }
     };
 
-    const reserveAppointmentTimes = async () => {
-      let scheduleStatus = await checkTimeSlots();
+    const reserveAppointmentTimes = async (appointmentTime, year, month, dayOfMonth, updatedAvailability, room) => {
+      let scheduleStatus = await checkTimeSlots(appointmentTime, year, month, dayOfMonth, room);
       if (scheduleStatus) {
-        // console.log(scheduleStatus, "Schedule Status: Available");
+        //Schedule timeslots were confirmed to be available
         const scheduleResults = await Promise.all(
+          //Reserves all appointment times and returns an array of true or false for if each timeslot was successfully reserved.
           appointmentTime.map(async (time) => {
-            let updated = reserveTimeslot(time);
+            let updated = reserveTimeslot(time, year, month, dayOfMonth, updatedAvailability, room);
             return updated;
           })
         );
-        // console.log(Updated Schedule Timeslots: ", scheduleResults);
         if (scheduleResults.includes(false)) {
-          res.status(502).json({ success: scheduleResults, message: "Failed to reserve timeslots for reservation." });
-          // If a timeslot failed to be reserved, return false
+          //Checks to see if any timeslot failed to be reserved
+          res.status(502);
+          reStatus.push({schedule: "false, failed to reserve", success: false});
           return false;
         } else {
+          //All timeslots were reserved properly
+          reStatus.push({schedule: "true, timeslots reserved", success: true});
           return true;
         }
       } else {
-        // console.log(scheduleStatus, "Schedule Status: Unavailable");
-        res.status(406).json({ success: scheduleStatus, message: "One or more of the requested timeslots have been reserved by someone else already." });
+        //Records schedule as false, meaning: One or more of the requested timeslots have been reserved by someone else already.
+        res.status(406);
+        reStatus.push({schedule: "false, already reserved", success: false});
+        return false;
       }
     };
-//portfoliopage3001@gmail.com
-//portfoliopage3001@gmail.com
-    try {
-      let scheduleStatus = await reserveAppointmentTimes();
-      // console.log("All timeslots updated: ", scheduleStatus);
-      if (scheduleStatus) {
-        const reservations = await Reservation.create(req.body);
-        if (reservations) {
-          try {
-            const emailReceipt = await sendEmail(req.body.email);
-            console.log("Email Receipt: ", emailReceipt);
+
+    const makeReservation = async (appointmentTime, year, month, dayOfMonth, updatedAvailability, room, index) => {
+      try {
+        let scheduleStatus = await reserveAppointmentTimes(appointmentTime, year, month, dayOfMonth, updatedAvailability, room);
+        // console.log("All timeslots updated: ", scheduleStatus);
+        // console.log("schedule: ", scheduleStatus);
+        if (scheduleStatus) {
+          const reservations = await Reservation.create(req.body[index]);
+          if (reservations) {
             //Checking Response
-            res.status(201).json({ message: "Reservation added successfully", data: reservations });
-          } catch (error) {
-            res.status(500).json({ message: 'Error sending email', error: error.message });
+            res.status(201);
+            reStatus[index].reservation = "Reservation added successfully";
+            // console.log('status3: ', reStatus);
           }
         }
-
+      } catch (error) {
+        res.status(502);
+        // console.log('status: ', reStatus);
+        // console.log('status2: ', reStatus[index])
+        reStatus[index].reservation = "Reservation failed to be created";
+        reStatus[index].success = false;
       }
-    } catch (error) {
-      res.status(502).json({ success: false, message: "Reservation failed to be created", error });
     }
+
+    for(let i=0; i<req.body.length; i++) {
+      // Extracts the room key from the req object
+      let { room } = req.body[i];
+      room = Number(room);
+      delete req.body[i].room;
+
+      const { day, appointmentTime } = req.body[i];
+      const date = day.split(", ");
+      const newDate = date[0].split(" ");
+
+      const year = Number(date[1]);
+      const month = newDate[0];
+      const dayOfMonth = Number(newDate[1]);
+      const updatedAvailability = { available: false };
+      // console.log("for loop arg: ", appointmentTime, year, month, dayOfMonth, updatedAvailability, room, i);
+      await makeReservation(appointmentTime, year, month, dayOfMonth, updatedAvailability, room, i);
+
+      if(i === req.body.length - 1) {
+        try {
+          if(reStatus.find((ele) => ele.success === true )) {
+            const emailReceipt = await sendEmail(req.body[i].email);
+            // console.log("final: ", reStatus);
+            // console.log("Email Sent ");
+            reEmail = {email: "Email Sent", send: true};
+            
+            res.json({reservations: reStatus, reEmail});
+          } else {
+            reEmail = {email: "Reservation failed, email not sent", send: false};
+            res.json({reservations: reStatus, reEmail});
+
+          }
+
+        } catch (error) {
+          res.status(500);
+          reEmail = {email: "Error sending email", send: false};
+        }
+      }
+    }
+
+
   },
   async getReservation(req, res) {
     try {

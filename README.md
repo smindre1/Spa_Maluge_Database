@@ -54,7 +54,7 @@ There are five groupings/collections for the API:
 
     - `Enpoint:` /api/reservations/
         - **GET**: Fetches a list of all the reservations.
-        - **POST**: Creates a new reservation.
+        - **POST**: Creates a new reservation(s).
     - `Enpoint:` /api/reservations/:reservationId/
         - **GET**: Fetches a specific reservations data based on the reservation id.
         - **PUT**: Updates a specific reservation.
@@ -82,12 +82,13 @@ Things to update
 * utils/auth secret variable to .env variable to make it more secure and match it on client site.
 * Fix user route response so it does not send all data back.
 * Add stripe payment method server routes.
+* Check if repeated credentials when adding a User will prevent a new user creation.
+* Have a check for the email
 
 README.md sections to add:
 *Features such as auth and a seeder file.
 *Installation such as seeding database from local machine and updating config and server.js cors' origin .env variable.
 
 Commit update message checklist:
-*Updated package json file: package nodemon was updated and package nodemailer was added.
 
 -->
