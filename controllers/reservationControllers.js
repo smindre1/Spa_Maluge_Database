@@ -1,4 +1,4 @@
-const { Reservation, Schedule } = require("../models");
+const { Reservation, Schedule, Inventory } = require("../models");
 const nodemailer = require("nodemailer");
 const { google } = require('googleapis');
 const OAuth2 = google.auth.OAuth2;
@@ -13,11 +13,45 @@ module.exports = {
       .catch((err) => res.status(500).json(err));
   },
   async addReservation(req, res) {
-    // req body should include:
-    // { name: string, email: string, phone: string, day: string (eg. "January 1, 2024"), appointmentTime: [Int], services: [{type: string, client: string, price: Int (unit of dollars)}], specialRequests: string, payment: {cardOwner: "Bob", cardNumber: 1000, cardExpiration: 1000, securityCode: 123, billingAddress: "Confusion"} (prefilled because it currently does not take payment information), room: Int };
-    // console.log("req: ", req.body);
+
     let reStatus = [];
     let reEmail = {};
+    let priceList = [];
+
+    const priceCheck = async () => {
+      let itemList = [];
+      let serviceList = [];
+      for(let i=0; i < req.body.length; i++) {
+        let ele = req.body[i].services[0];
+        serviceList.push(ele.type);
+        !itemList.includes(ele.itemCategory) ? itemList.push(ele.itemCategory) : null;
+
+        if(ele?.addOns?.length > 0) {
+          for(let q=0; q < ele.addOns.length; q++) {
+            serviceList.push(ele.addOns[q].addition);
+          }
+          // If there is an add-on then include add-on item category 4
+          itemList.push(4);
+        } 
+      }
+      
+      try {
+        const itemLogs = await Inventory.aggregate([
+          // Filter by ItemCategory
+            { $match: { ItemCategory: { $in: itemList }}},
+            // Deconstruct Items array
+            { $unwind: "$Items"},
+            // Filter by Items.Item value
+            { $match: { "Items.Item": { $in: serviceList }}},
+            // Return only the Items objects
+            { $replaceRoot: { newRoot: "$Items" }}
+        ]);
+        return itemLogs;
+    } catch (error) {
+        console.error("Error fetching items:", error);
+    }
+
+    }
 
     // Runs a check on if the reserved schedule is available or not
     const checkTimeSlots = async (appointmentTime, year, month, dayOfMonth, room) => {
@@ -189,21 +223,43 @@ module.exports = {
     const makeReservation = async (appointmentTime, year, month, dayOfMonth, updatedAvailability, room, index) => {
       try {
         let scheduleStatus = await reserveAppointmentTimes(appointmentTime, year, month, dayOfMonth, updatedAvailability, room);
-        // console.log("All timeslots updated: ", scheduleStatus);
-        // console.log("schedule: ", scheduleStatus);
         if (scheduleStatus) {
+          priceList.length === 0 ? priceList = await priceCheck() : null;
+          priceList.map((ele) => {
+            //Checks the service price against database
+            if(ele.Item == req.body[index].services[0].type) {
+              //Checks that there is a matching service name
+              let duration = parseInt((appointmentTime.length) * 15)
+              //tag.time is set to a range for service rate times that aren't a multiple of 15
+              let rate = ele.Prices.filter((tag) => tag.time < duration + 15 && tag.time > duration - 15)
+              if(rate.length > 0) {
+                rate[0].cost == req.body[index].services[0].price ? null : req.body[index].services[0].price = parseInt(rate[0].cost);
+              } else {
+                console.log("Making new rate...")
+
+                let maxRate = 0;
+                let minutes = 0;
+                for(let i = 0; ele.Prices.length > i; i++) {
+                  if(ele.Prices[i].cost > maxRate) {
+                    maxRate = ele.Prices[i].cost;
+                    minutes = ele.Prices[i].time
+                  }
+                }
+                minutes = (Math.round(minutes/15));
+                maxRate = maxRate / minutes;
+                req.body[index].services[0].price = parseInt(maxRate * duration);
+              }
+            }
+          })
           const reservations = await Reservation.create(req.body[index]);
           if (reservations) {
             //Checking Response
             res.status(201);
             reStatus[index].reservation = "Reservation added successfully";
-            // console.log('status3: ', reStatus);
           }
         }
       } catch (error) {
         res.status(502);
-        // console.log('status: ', reStatus);
-        // console.log('status2: ', reStatus[index])
         reStatus[index].reservation = "Reservation failed to be created";
         reStatus[index].success = false;
       }
